@@ -86,13 +86,13 @@ def adduser():
         cursor = cnx.cursor()
         querry = ("insert into users (name, type) VALUES (%s,%s)")
         cursor.execute(querry, insert)
-        result = cursor.fetchall
+        
         logTime = datetime.now()
-        logUserId = result[0][0]
-        print(cursor.statement + " " + str(cursor.rowcount))
+        logUserId = cursor.lastrowid
+        
         cursor.close()
         cnx.commit()
-        logAction = "User " + insert[0] + "added with type " + insert[1]
+        logAction = "User " + insert[0] + " added with type " + insert[1]
         logDbAction(logUserId,logAction,logTime)
         return "successful"
     except Exception, err:
