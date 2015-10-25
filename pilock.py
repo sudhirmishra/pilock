@@ -9,7 +9,7 @@ from werkzeug.contrib.fixers import LighttpdCGIRootFix
 from local import settings
 app = Flask(__name__)
 app.wsgi_app = LighttpdCGIRootFix(app.wsgi_app)
-cnx = mysql.connector.connect(user=settings.user, password = settings.passwd, host='127.0.0.1', database = 'pilock')
+cnx = mysql.connector.connect(user=settings.user, password = settings.passwd, host=settings.host, database = settings.database)
 global currentlyLocked
 currentlyLocked = [False,]
 
