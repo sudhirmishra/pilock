@@ -5,9 +5,11 @@ from flask import request
 from flask import Flask
 from datetime import datetime
 from werkzeug.contrib.fixers import LighttpdCGIRootFix
+
+from local import settings
 app = Flask(__name__)
 app.wsgi_app = LighttpdCGIRootFix(app.wsgi_app)
-cnx = mysql.connector.connect(user='root', password = 'pilock', host='127.0.0.1', database = 'pilock')
+cnx = mysql.connector.connect(user=settings.user, password = settings.passwd, host='127.0.0.1', database = 'pilock')
 global currentlyLocked
 currentlyLocked = [False,]
 
