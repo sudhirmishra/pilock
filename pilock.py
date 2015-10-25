@@ -3,6 +3,7 @@ import mysql.connector
 import mysql.connector.cursor
 from flask import request
 from flask import Flask
+from datetime import datetime
 from werkzeug.contrib.fixers import LighttpdCGIRootFix
 app = Flask(__name__)
 app.wsgi_app = LighttpdCGIRootFix(app.wsgi_app)
@@ -10,6 +11,15 @@ cnx = mysql.connector.connect(user='root', password = 'pilock', host='127.0.0.1'
 global currentlyLocked
 currentlyLocked = [False,]
 
+def logDbAction(userid,logAction,logTime):
+    cursor = cnx.cursor()
+    insert = (userid,logAction,logTime)
+    querry = ("insert into logs (userid, action, time) VALUES (%s,%s, %s)")
+    cursor.execute(querry, insert)
+    result = cursor.fetchall
+    print(cursor.statement + " " + str(cursor.rowcount))
+    cursor.close
+    cnx.commit()
 
 @app.route('/open', methods=['POST'])
 def open():
@@ -18,15 +28,24 @@ def open():
         cursor = cnx.cursor()
         cursor.execute(querry, (request.form['username'],))
         result = cursor.fetchall()
+        logTime = datetime.now()
+        logUserId = result[0][0]
+        cursor.close()
         if len(result)  > 0:
             if currentlyLocked[0] == True:
                 currentlyLocked[0] = False
-                return 'open'
+                logAction = "Opened the lock"
+                logDbAction(logUserId,logAction,logTime)
+                return 'opend'
             else:
+                logAction = "Tried to open already open lock"
+                logDbAction(logUserId,logAction,logTime)
                 return "Aleady Open"
         else:
+           logAction = "tried to open the lock but denied due to invalid credentials"
+           logDbAction(logUserId,logAction,logTime)
            return 'denied'
-        cursor.close()
+
     except Exception, err:
         print Exception,err
 
@@ -37,15 +56,23 @@ def lock():
         cursor=cnx.cursor()
         cursor.execute(querry, (request.form['username'],))
         result = cursor.fetchall()
+        logTime = datetime.now()
+        logUserId = result[0][0]
+        cursor.close()
         if len(result)  > 0:
             if currentlyLocked[0] == True:
-
+                logAction = "Attempted to lock already locked lock"
+                logDbAction(logUserId,logAction,logTime)
                 return "Already Locked"
 
             else:
+                logAction = "Locked the lock"
+                logDbAction(logUserId,logAction,logTime)
                 currentlyLocked[0] = True
                 return "locked"
         else:
+           logAction = "tried to lock the lock but denied due to invalid credentials"
+           logDbAction(logUserId,logAction,logTime)
            return 'denied'
         cursor.close
     except Exception, err:
@@ -58,9 +85,13 @@ def adduser():
         querry = ("insert into users (name, type) VALUES (%s,%s)")
         cursor.execute(querry, insert)
         result = cursor.fetchall
+        logTime = datetime.now()
+        logUserId = result[0][0]
         print(cursor.statement + " " + str(cursor.rowcount))
-        cursor.close
+        cursor.close()
         cnx.commit()
+        logAction = "User " + insert[0] + "added with type " + insert[1]
+        logDbAction(logUserId,logAction,logTime)
         return "successful"
     except Exception, err:
         print Exception,err
